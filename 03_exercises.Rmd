@@ -143,8 +143,7 @@ garden_harvest %>%
   group_by(vegetable, variety) %>% 
   summarize(variety_length_final = min(variety_length)) %>% 
   mutate(variety_lower = str_to_lower(variety)) %>% 
-  group_by(vegetable) %>% 
-  mutate()
+  group_by(vegetable) 
 
   
 ```
