@@ -181,7 +181,7 @@ Here is the code to read in the data. We do this a little differently than usual
 
 ```{r cache=TRUE}
 data_site <- 
-  "https://www.macalester.edu/~dshuman1/data/112/2014-Q4-Trips-History-Data-Small.rds" 
+  "https://www.macalester.edu/~dshuman1/data/112/2014-Q4-Trips-History-Data.rds" 
 Trips <- readRDS(gzcon(url(data_site)))
 Stations<-read_csv("http://www.macalester.edu/~dshuman1/data/112/DC-Stations.csv")
 ```
@@ -202,14 +202,22 @@ Trips %>%
   labs(title = "Density of Bicycle Use By Date", x = "", y = "")
 ```
 
-It seems that bicycle use decresed as the winter months approached, and then arrived. This may be attributed to worsening weather conditions. 
+It seems that bicycle use decreased as the winter months approached, and then arrived. This may be attributed to worsening weather conditions. 
 
   8. A density plot of the events versus time of day.  You can use `mutate()` with `lubridate`'s  `hour()` and `minute()` functions to extract the hour of the day and minute within the hour from `sdate`. Hint: A minute is 1/60 of an hour, so create a variable where 3:30 is 3.5 and 3:45 is 3.75.
   
 ```{r}
 Trips %>% 
-  
+  mutate(hour2 = hour(sdate),
+         minute2 = minute(sdate),
+         time_of_day = hour2 + minute2/60) %>% 
+  ggplot(aes(x = time_of_day)) + 
+  geom_density() +
+  labs(title = "Bike Rental by Time of Day (hrs)", x = "", y = "") +
+  theme(axis.text.y = element_blank())
 ```
+  
+It seems like the largest usage of the bikes occurs at around 8am and 5pm - 6pm. This is interesting, such observations can likely be paired with the knowlege of a 9am - 5pm work day. 
   
   9. A bar graph of the events versus day of the week. Put day on the y-axis.
   
@@ -226,34 +234,89 @@ This bar graph gives us insight into the usage of bikes by weekday. The data mak
   10. Facet your graph from exercise 8. by day of the week. Is there a pattern?
   
 ```{r}
-
+Trips %>% 
+  mutate(week_day = wday(sdate, label = TRUE),
+         hour2 = hour(sdate),
+         minute2 = minute(sdate),
+         time_of_day = hour2 + minute2/60) %>% 
+  ggplot(aes(x = time_of_day)) + 
+  geom_density() +
+  labs(title = "Bike Rental by Time of Day (hrs)", x = "", y = "") +
+  theme(axis.text.y = element_blank()) + 
+  facet_wrap(vars(week_day))
 ```
+  
+The correlation between the distrobution of bike rentals in the graph above does an even better job at highlighting the impact of the average work commute. During the work week the most popular times are at 8am and 5pm, while on weekends the usage is dispersed over a larger time period in the afternoon.  
   
 The variable `client` describes whether the renter is a regular user (level `Registered`) or has not joined the bike-rental organization (`Causal`). The next set of exercises investigate whether these two different categories of users show different rental behavior and how `client` interacts with the patterns you found in the previous exercises. 
 
   11. Change the graph from exercise 10 to set the `fill` aesthetic for `geom_density()` to the `client` variable. You should also set `alpha = .5` for transparency and `color=NA` to suppress the outline of the density function.
   
 ```{r}
-
+Trips %>% 
+  mutate(week_day = wday(sdate, label = TRUE),
+         hour2 = hour(sdate),
+         minute2 = minute(sdate),
+         time_of_day = hour2 + minute2/60) %>% 
+  ggplot(aes(x = time_of_day)) + 
+  geom_density(aes(fill = client, alpha = .5), color = NA) +
+  labs(title = "Bike Rental by Time of Day (hrs) and Type of Client", x = "", y = "") +
+  theme(axis.text.y = element_blank()) + 
+  facet_wrap(vars(week_day))
 ```
+
+This new "fill"ed graph shows a density plot for both types of clients, exposing a serious difference in usage patterns. During the workweek, the registered clients are quite inactive from 10am - 3pm, while this is when the casual clients are most active.
 
   12. Change the previous graph by adding the argument `position = position_stack()` to `geom_density()`. In your opinion, is this better or worse in terms of telling a story? What are the advantages/disadvantages of each?
   
 ```{r}
-
+Trips %>% 
+  mutate(week_day = wday(sdate, label = TRUE),
+         hour2 = hour(sdate),
+         minute2 = minute(sdate),
+         time_of_day = hour2 + minute2/60) %>% 
+  ggplot(aes(x = time_of_day)) + 
+  geom_density(aes(fill = client, alpha = .5), color = NA, position = position_stack()) +
+  labs(title = "Bike Rental by Time of Day (hrs) and Type of Client", x = "", y = "") +
+  theme(axis.text.y = element_blank()) + 
+  facet_wrap(vars(week_day))
 ```
+
+This new stacking functions simply graphs the registered density, and then adds the data from casual users on top. The disadvantage of this type of graph is the difference in usage patterns is not easily seen. This may be because the number of registered users is bigger, or they are just more consistant/using the bikes more often. On the other hand, this stacked graph is useful because it helps us understand how the density of the total bike user population is formed by each client subset. 
   
   13. In this graph, go back to using the regular density plot (without `position = position_stack()`). Add a new variable to the dataset called `weekend` which will be "weekend" if the day is Saturday or Sunday and  "weekday" otherwise (HINT: use the `ifelse()` function and the `wday()` function from `lubridate`). Then, update the graph from the previous problem by faceting on the new `weekend` variable. 
   
 ```{r}
-
+Trips %>% 
+  mutate(week_day = wday(sdate, label = TRUE),
+         hour2 = hour(sdate),
+         minute2 = minute(sdate),
+         time_of_day = hour2 + minute2/60,
+         type_of_day = ifelse(wday(sdate) %in% c(1,7), "weekend", "weekday")) %>% 
+  ggplot(aes(x = time_of_day)) + 
+  geom_density(aes(fill = client, alpha = .5), color = NA) +
+  labs(title = "Bike Rental by Time of Day (hrs), Type of Client, and Type of Day", x = "", y = "") +
+  theme(axis.text.y = element_blank()) + 
+  facet_wrap(vars(type_of_day))
 ```
   
   14. Change the graph from the previous problem to facet on `client` and fill with `weekday`. What information does this graph tell you that the previous didn't? Is one graph better than the other?
   
 ```{r}
-
+Trips %>% 
+  mutate(week_day = wday(sdate, label = TRUE),
+         hour2 = hour(sdate),
+         minute2 = minute(sdate),
+         time_of_day = hour2 + minute2/60,
+         type_of_day = ifelse(wday(sdate) %in% c(1,7), "weekend", "weekday")) %>% 
+  ggplot(aes(x = time_of_day)) + 
+  geom_density(aes(fill = type_of_day, alpha = .5), color = NA) +
+  labs(title = "Bike Rental by Time of Day (hrs), Type of Client, and Type of Day", x = "", y = "") +
+  theme(axis.text.y = element_blank()) + 
+  facet_wrap(vars(client))
 ```
+  
+This graph better compares the shift withing client type regarding the different parts of the week. It is very easy to see the most popular time of usage shift for the registered users on the weekends. 
   
 ### Spatial patterns
 
@@ -261,20 +324,33 @@ The variable `client` describes whether the renter is a regular user (level `Reg
   
 ```{r}
 Trips %>% 
-  mutate(name = sstation) %>% 
-  left_join(Stations,
-            by = "name") %>% 
-  ggplot(aes(x = lat, y = long, color = name)) +
+  count(sstation) %>% 
+  inner_join(Stations,
+            by = c("sstation" = "name")) %>% 
+  ggplot(aes(x = lat, y = long, color = n)) +
   geom_point() +
-  theme(legend.position = "none")
+  labs(title = "Total Departures From Each Station Represented by Their Longitude and Latitude", x = "Latitude", y = "Longitude")
+  
 ```
+  
+After assigning the color to the number of departures from a given station, it becomes clear that the majority of the bikes usage comes in one central area.   
   
   16. Only 14.4% of the trips in our data are carried out by casual users. Create a plot that shows which area(s) have stations with a much higher percentage of departures by casual users. What patterns do you notice? (Again, we'll improve this next week when we learn about maps).
   
 ```{r}
-
+Trips %>% 
+  group_by(sstation) %>% 
+  summarize(total_departures = n(),
+            prop = mean(client == "Casual")) %>% 
+  inner_join(Stations,
+             by = c("sstation" = "name")) %>% 
+  ggplot(aes(x = lat, y = long, color = prop)) +
+  geom_point() + 
+  labs(title = "Stations with the Highest Casual User Percentage by Longitude and Latitude", x = "Latitude", y = "Longitude")
   
 ```
+  
+While certain stations within the biggest cluster have a higher proportion of casual users, there are also stations on the outskirts that have a high percentage. It also seems that there is a correlation between the percentage of users being casual, and the overall departures from that station.   
   
 ### Spatiotemporal patterns
 
@@ -295,8 +371,8 @@ Top_departure_dates
   
 ```{r}
 Top_departure_dates %>% 
-  inner_join(Trips,
-             by = c("sstation","date"))
+  left_join(Trips,
+             by = c("sstation", "date"))
 ```
   
   19. Build on the code from the previous problem (ie. copy that code below and then %>% into the next step.) and group the trips by client type and day of the week (use the name, not the number). Find the proportion of trips by day within each client type (ie. the proportions for all 7 days within each client type add up to 1). Display your results so day of week is a column and there is a column for each client type. Interpret your results.
@@ -322,6 +398,8 @@ Top_departure_dates %>%
 ## GitHub link
 
   20. Below, provide a link to your GitHub page with this set of Weekly Exercises. Specifically, if the name of the file is 03_exercises.Rmd, provide a link to the 03_exercises.md file, which is the one that will be most readable on GitHub.
+  
+
 
 ## Challenge problem! 
 
