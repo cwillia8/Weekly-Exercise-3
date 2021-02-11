@@ -159,7 +159,7 @@ garden_harvest %>%
 
 ## Bicycle-Use Patterns
 
-In this activity, you'll examine some factors that may influence the use of bicycles in a bike-renting program.  The data come from Washington, DC and cover the last quarter of 2014.
+In this activity, you'll examine some factors that may influence the use of bicycles in a bike-renting program.  The data come from Washington, DC and cover the last quarter of 2014...
 
 <center>
 
